@@ -77,7 +77,7 @@ public:
 	inline T Call(size_t methodId, Args... args) {
 		static_assert(InvalidArgumentTypes<Args...>::sum==0, "Argument can be only of pointer or primitive type");
 		return (
-				(T __FASTCALL (*)(void*,Args...))
+				(T (*)(void*,Args...))
 				(self->vtable()->
 				 methods[methodId]
 				)
