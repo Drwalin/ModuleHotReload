@@ -2,18 +2,14 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <cstdio>
+
 #include <InterfaceGenerator.hpp>
 #include <Pointer.hpp>
 
 #include <lib/dll/DllImporter.cpp>
-//#include <lib/dll/ModulesFactory.cpp>
 
-//#include <InterfaceGenerator.cpp>
-extern "C" uint64_t PopNewEmptyModuleId();
-auto _____fefgsjfiop = PopNewEmptyModuleId;
-#include <cstdio>
 int main() {
-//	printf("\n %llu", PopNewEmptyModuleId());
 	Dll dll("dll/tmp/example");
 	if(!dll.IsValid()) {
 		std::cout << "\n invalid dll";
