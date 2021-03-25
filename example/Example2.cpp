@@ -39,7 +39,7 @@ public:
 		std::cout << "\n Running my class" << *data << "  " << __PRETTY_FUNCTION__;
 		return 343254;
 	}
-	int Make8(std::string* data, float* a) {
+	int Make8(std::string* data, float a) {
 		std::cout << "\n Running my class" << *data << "  " << __PRETTY_FUNCTION__;
 		return 432143;
 	}
@@ -63,17 +63,17 @@ private:
 };
 
 GENERATE_CALLABLE_VTABLE_HEADER(MyClass,
-		_(Make),
-		_(Run),
-		_(Make1),
-		_(Make2),
-		_(Make3),
-		_(Make4),
-		_(Make5),
-		_(Make6),
-		_(Make7),
-		_(Make8),
-		_(Make9)
+		0, _(Make),
+		1, _(Run),
+		2, _(Make1),
+		3, _(Make2),
+		4, _(Make3),
+		5, _(Make4),
+		6, _(Make5),
+		7, _(Make6),
+		8, _(Make7),
+		9, _(Make8),
+		10, _(Make9)
 		);
 
 #define MAG Ciak
@@ -84,6 +84,8 @@ int APPEND(MAG,Ups)() {
 	printf("\n elo");
 	return 123;
 }
+
+#include <InterfaceGenerator.cpp>
 
 #include <cstdio>
 int main() {
@@ -96,9 +98,11 @@ int main() {
 	std::cout << "\n vtable:       " << &MyClass_vtable;
 	std::cout << "\n self->vtable: " << p.self->self;
 	
-	
-	
 	std::string str = "Z majna";
+	for(int i=2; i<=10; ++i)
+		p.Call<int>(i, &str, 13);
+	
+	
 	p.Call<int>(1, &str);
 	std::cout<<"\n 4 - str: " << str;
 	

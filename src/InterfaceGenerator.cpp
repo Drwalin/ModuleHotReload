@@ -16,26 +16,11 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef VTABLE_HPP
-#define VTABLE_HPP
-
-#include <cinttypes>
-#include <string>
 #include <atomic>
-#include <mutex>
-#include <unordered_set>
+#include <cinttypes>
 
-struct VTable {
-	void** methods;
-	void* (*allocate)();
-	void (*free)(void*);
-	size_t size;
-	std::string name;
-	uint64_t id;
-	uint64_t compilationTimestamp;
-	std::unordered_set<void*> objects;
-	std::mutex mutex;
-};
-
-#endif
+extern "C" uint64_t PopNewEmptyModuleId() {
+	static std::atomic<uint64_t> id_counter = 0;
+	return ++id_counter;
+}
 
