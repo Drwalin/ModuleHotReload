@@ -2,14 +2,16 @@
 DEBUGFLAGS = -ggdb3 -g3 -ggdb -g
 PROFILEFLAGS = 
 FASTFLAGS = -Ofast
-INCLUDES = -I../../src
+INCLUDES = -I../../$(SRC)
 STRIPFLAGS = -s
 CXX = g++
 SHARED = -shared -fPIC
 OBJECT = -c
 CXXFLAGS = -m64 -std=c++17 $(INCLUDES)
 LIBS =
-DLLDIR = dll/tmp
+MODULEDIR = dll/tmp
+CORE_DLLS = counter$(DLL)
+SRC = src
 
 ifeq ($(O), fast)
     CXXFLAGS += $(FASTFLAGS)
@@ -26,6 +28,9 @@ ifdef profile
 endif
 ifdef strip
 	CXXFLAGS += $(STRIPFLAGS)
+endif
+ifdef static
+	CXXFLAGS += -static
 endif
 
 
@@ -51,7 +56,7 @@ ifeq ($(SYSTEM_TYPE),win)
 	DLL = .dll
 	EXECUTABLE = main.exe
 else
-	LIBS += -ldl 
+	LIBS += -ldl
 	DLL = .so
 	EXECUTABLE = main.out
 endif
@@ -67,24 +72,25 @@ run: dll $(EXECUTABLE)
 	./$(EXECUTABLE)
 	@echo
 
-$(EXECUTABLE): main.cpp
+$(EXECUTABLE): $(SRC)/main.cpp
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS) $(EXECUTABLE_RPATH)
 	
-dll: $(DLLDIR)/example$(DLL)
+dll: $(MODULEDIR)/example$(DLL)
 	
-$(DLLDIR)/%$(DLL): %.cpp counter$(DLL)
+$(MODULEDIR)/%$(DLL): $(SRC)/%.cpp $(CORE_DLLS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(SHARED) $(MODULE_RPATH) $(LIBS)
 	
 
-counter$(DLL): ../../src/InterfaceGenerator.cpp
+counter$(DLL): ../../$(SRC)/InterfaceGenerator.cpp
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(SHARED) $(LIBS)
 
+
 strip:
-	strip $(EXECUTABLE) $(DLLDIR)/*$(DLL) *$(DLL) 
+	strip $(EXECUTABLE) $(MODULEDIR)/*$(DLL) *$(DLL) 
 
 
 
 RM = rm -f
 .PHONY: clean
 clean:
-	$(RM) $(EXECUTABLE) $(DLLDIR)/*$(DLL) *$(DLL) gmon.out
+	$(RM) $(EXECUTABLE) $(MODULEDIR)/*$(DLL) *$(DLL) gmon.out

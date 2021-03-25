@@ -13,7 +13,7 @@ int main() {
 	Dll dll("dll/tmp/example");
 	if(!dll.IsValid()) {
 		std::cout << "\n invalid dll";
-		return 1;
+		return 0;
 	}
 	
 	VTable* vtable = dll.Get<VTable*(*)()>("MyClass_GetVTable")();
