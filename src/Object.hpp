@@ -1,5 +1,5 @@
 /*
- *  This file is part of ModulHotReload. Please see README for details.
+ *  This file is part of ModuleHotReload. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
  *  ICon3 is free software: you can redistribute it and/or modify
@@ -51,10 +51,10 @@ public:
 		self = ptr;
 	}
 	
-	inline void New(VTable* vtable) {
+	inline void New(VTable* _vtable) {
 		Delete();
-		if(vtable) {
-			self = vtable->allocate();
+		if(_vtable) {
+			self = _vtable->allocate();
 		}
 	}
 	
@@ -80,9 +80,17 @@ public:
 	
 	inline void Delete() {
 		if(self) {
-			GetVTable()->free(self);
+			vtable()->free(self);
 			self = NULL;
 		}
+	}
+	
+	inline VTable* vtable() {
+		return *(VTable**)self;
+	}
+	
+	inline void* object() {
+		return (void*)((size_t)self+sizeof(void*));
 	}
 	
 private:
