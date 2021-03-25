@@ -21,6 +21,7 @@
 
 #include <cinttypes>
 #include <cstdlib>
+#include <memory>
 
 #include "VTable.hpp"
 #include "TypeAsserts.hpp"
@@ -55,6 +56,36 @@ inline CLASS<T, Class, Args...> GetCLASS(T (Class::*member)(Args...)) {
 	return CLASS<T, Class, Args...>();
 }
 
+template<typename... Args>
+constexpr size_t Max(const Args...args);
+template<typename Size, typename T, typename... Args>
+constexpr size_t Max(const Size id, const T a, const Args... args) {
+	size_t i = Max<Args...>(args...);
+	return i>id ? i : id;
+}
+template<>
+constexpr size_t Max() {
+	return 0;
+}
+
+void CreateOneMethod(void**methods, void***placeholder) {
+}
+template<typename Size, typename Void, typename... Args>
+void CreateOneMethod(void** methods, Size id, Void ptr, Args... args) {
+	methods[id] = ptr;
+	CreateOneMethod(methods, args...);
+}
+
+template<typename... Args>
+void** CreateMethodsPointers(Args... args) {
+	const static size_t count = Max<const Args...>(args...)+1;
+	static std::shared_ptr<void*[]> methods(new void*[count]);
+	for(size_t i=0; i<count; ++i)
+		methods[i] = NULL;
+	CreateOneMethod<Args...>(methods.get(), args..., (void***)NULL);
+	return methods.get();
+}
+
 extern "C" uint64_t PopNewEmptyModuleId();
 
 #define GET_FUNCTION(Class, Method) \
@@ -63,23 +94,23 @@ extern "C" uint64_t PopNewEmptyModuleId();
 #define CONCATENATE(A, B) INNER_CONCATENATE(A, B)
 #define INNER_CONCATENATE(S, B) S##B
 
-#define _(Method) (void*)GET_FUNCTION(ClassDecl, Method)
+#define _(Method) ((void*)GET_FUNCTION(ClassDecl, Method))
 
 #define GENERATE_CALLABLE_VTABLE_HEADER(Class, ...) \
+	struct Class##_struct { \
+		VTable* vtable; \
+		Class object; \
+	}; \
 	using ClassDecl = Class; \
 	extern "C" { \
-		void* Class##_AllocateObject(); \
-		void Class##_FreeObject(void* ptr); \
-	}; \
-	void* Class##_methods[] = { \
-		__VA_ARGS__, \
-		NULL \
+		struct Class##_struct* Class##_AllocateObject(); \
+		void Class##_FreeObject(struct Class##_struct* ptr); \
 	}; \
 	VTable Class##_vtable { \
-		Class##_methods \
-		Class##_AllocateObject, \
-		Class##_FreeObject, \
-		sizeof(Class), \
+		CreateMethodsPointers(__VA_ARGS__), \
+		(void*(*)())Class##_AllocateObject, \
+		(void(*)(void*))Class##_FreeObject, \
+		sizeof(Class##_struct), \
 		#Class, \
 		PopNewEmptyModuleId(), \
 		UNIX_TIMESTAMP \
@@ -88,23 +119,18 @@ extern "C" uint64_t PopNewEmptyModuleId();
 		VTable* Class##_GetVTable() { \
 			return &Class##_vtable; \
 		} \
-		void* Class##_AllocateObject() { \
-			void* mem = malloc(sizeof(void*)+sizeof(Class)); \
-			if(mem == NULL)\
-				return NULL; \
-			Class##_vtable.numberOfObjects++;\
-			*((void**)mem) = &Class##_vtable; \
-			new ((void*)((size_t)mem+sizeof(void*))) Class(); \
-			return mem; \
+		Class##_struct* Class##_AllocateObject() { \
+			Class##_struct * ptr = new Class##_struct{&Class##_vtable}; \
+			Class##_vtable.objects.insert(ptr); \
+			return ptr; \
 		} \
-		void Class##_FreeObject(void* ptr) { \
+		void Class##_FreeObject(Class##_struct* ptr) { \
 			if(ptr) { \
-				if((*(VTable**)ptr) == &Class##_vtable) { \
-					Class##_vtable.numberOfObjects;\
-						((Class*)((void*)((size_t)ptr+sizeof(void*))))->~Class(); \
-					free(ptr); \
-				} else if(*(VTable**)ptr) \
-					(*(VTable**)ptr)->free(ptr); \
+				if(ptr->vtable == &Class##_vtable) { \
+					Class##_vtable.objects.erase(ptr); \
+					delete ptr; \
+				} else if(ptr->vtable) \
+					ptr->vtable->free(ptr); \
 				else { \
 					fprintf(stderr, "\n Error: calling " #Class "_FreeObject on object with null VTable."); \
 				} \
