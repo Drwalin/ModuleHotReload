@@ -76,39 +76,3 @@ GENERATE_CALLABLE_VTABLE_HEADER(MyClass,
 		10, _(Make9)
 		);
 
-#define MAG Ciak
-
-#define APPEND(A, B) REEVALUATE(A, B)
-#define REEVALUATE(S, B) S##B
-int APPEND(MAG,Ups)() {
-	printf("\n elo");
-	return 123;
-}
-
-#include <InterfaceGenerator.cpp>
-
-#include <cstdio>
-int main() {
-	std::cout<<"\n 1";
-	Pointer p(new Object());
-	std::cout<<"\n 2";
-	p.self->self = MyClass_AllocateObject();
-	std::cout<<"\n 3";
-	
-	std::cout << "\n vtable:       " << &MyClass_vtable;
-	std::cout << "\n self->vtable: " << p.self->self;
-	
-	std::string str = "Z majna";
-	p.Call<int>(1, &str);
-	for(int i=2; i<=10; ++i)
-		p.Call<int>(i, &str, 13);
-	
-	
-	std::cout<<"\n 4 - str: " << str;
-	
-	CiakUps();
-	
-	
-	return 0;
-}
-

@@ -28,7 +28,7 @@
 #include "lib/CompileTime.h"
 
 #if defined(__GNUC__)
-    #define __FASTCALL __fastcall
+    #define __FASTCALL __attribute__((fastcall)) // __fastcall
 #elif defined(_MSC_VER)
     #define __FASTCALL __attribute__((fastcall))
 #endif
@@ -44,7 +44,7 @@ public:
 	template<memberType member>
 	class INTERN {
 	public:
-		static __FASTCALL T Call(Class* ptr, Args... args) {
+		static T Call(Class* ptr, Args... args) {
 			static_assert(InvalidArgumentTypes<Args...>::sum==0, "Argument can be only of pointer or primitive type");
 			return (ptr->*member)(args...);
 		}
