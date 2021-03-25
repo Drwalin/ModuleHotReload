@@ -1,5 +1,5 @@
 /*
- *  This file is part of ModulHotReload. Please see README for details.
+ *  This file is part of ModuleHotReload. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
  *  ICon3 is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 
 #include "VTable.hpp"
 #include "TypeAsserts.hpp"
+#include "lib/CompileTime.h"
 
 #if defined(__GNUC__)
     #define __FASTCALL __fastcall
@@ -54,6 +55,8 @@ inline CLASS<T, Class, Args...> GetCLASS(T (Class::*member)(Args...)) {
 	return CLASS<T, Class, Args...>();
 }
 
+extern "C" uint64_t PopNewEmptyModuleId();
+
 #define GET_FUNCTION(Class, Method) \
 	decltype(GetCLASS(&Class::Method))::INTERN<&Class::Method>::Call
 
@@ -73,11 +76,13 @@ inline CLASS<T, Class, Args...> GetCLASS(T (Class::*member)(Args...)) {
 		NULL \
 	}; \
 	VTable Class##_vtable { \
+		Class##_methods \
 		Class##_AllocateObject, \
 		Class##_FreeObject, \
 		sizeof(Class), \
 		#Class, \
-		Class##_methods \
+		PopNewEmptyModuleId(), \
+		UNIX_TIMESTAMP \
 	}; \
 	extern "C" { \
 		VTable* Class##_GetVTable() { \

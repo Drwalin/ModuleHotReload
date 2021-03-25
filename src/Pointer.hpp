@@ -1,5 +1,5 @@
 /*
- *  This file is part of ModulHotReload. Please see README for details.
+ *  This file is part of ModuleHotReload. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
  *  ICon3 is free software: you can redistribute it and/or modify
@@ -28,51 +28,49 @@ public:
 	Pointer() : self(NULL) {
 	}
 	Pointer(Object* Object) {
-		self=Object;
+		self = Object;
 		if(self)
 			self->references++;
 	}
 	Pointer(Pointer& other) {
-		self=other.self;
+		self = other.self;
 		if(self)
 			self->references++;
 	}
 	Pointer(const Pointer& other) {
-		self=(Object*)other.self;
+		self = (Object*)other.self;
 		if(self)
 			self->references++;
 	}
 	Pointer(Pointer&& other) {
-		self=other.self;
+		self = other.self;
 	}
 	~Pointer() {
-		if(self) {
+		if(self)
 			self->RemoveReference();
-		}
 	}
 	
 	inline Pointer& operator=(Pointer& other) {
-		self=(Object*)other.self;
+		self = other.self;
 		if(self)
 			self->references++;
 		return *this;
 	}
 	inline Pointer& operator=(const Pointer& other) {
-		self=(Object*)other.self;
+		self = (Object*)other.self;
 		if(self)
 			self->references++;
 		return *this;
 	}
 	inline Pointer& operator=(Pointer&& other) {
-		self=(Object*)other.self;
+		self = other.self;
 		return *this;
 	}
 		
 	
 	inline VTable* GetVTable() const {
-		if(self) {
+		if(self)
 			return *(VTable**)self;
-		}
 	}
 	
 	template<typename T, typename... Args>
@@ -80,10 +78,10 @@ public:
 		static_assert(InvalidArgumentTypes<Args...>::sum==0, "Argument can be only of pointer or primitive type");
 		return (
 				(T __FASTCALL (*)(void*,Args...))
-				((*((VTable**)(self->self)))->
+				(self->vtable()->
 				 methods[methodId]
 				)
-			   )((void*)((size_t)self->self+sizeof(void*)), args...);
+			   )(self->object(), args...);
 	}
 	
 	inline operator bool() const {

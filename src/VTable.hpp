@@ -1,5 +1,5 @@
 /*
- *  This file is part of ModulHotReload. Please see README for details.
+ *  This file is part of ModuleHotReload. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
  *  ICon3 is free software: you can redistribute it and/or modify
@@ -22,14 +22,19 @@
 #include <cinttypes>
 #include <string>
 #include <atomic>
+#include <mutex>
+#include <unordered_set>
 
 struct VTable {
+	void** methods;
 	void* (*allocate)();
 	void (*free)(void*);
 	size_t size;
 	std::string name;
-	void** methods;
-	std::atomic<size_t> numberOfObjects;
+	uint64_t id;		// needs to be genrated by module loader
+	uint64_t compilationStamp;
+	std::unordered_set<void*> objects;
+	std::mutex mutex;
 };
 
 #endif
