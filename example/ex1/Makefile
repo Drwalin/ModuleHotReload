@@ -91,4 +91,4 @@ strip:
 RM = rm -f
 .PHONY: clean
 clean:
-	$(RM) $(EXECUTABLE) $(DLLDIR)/*$(DLL) *$(DLL)
+	$(RM) $(EXECUTABLE) $(DLLDIR)/*$(DLL) *$(DLL) gmon.out
