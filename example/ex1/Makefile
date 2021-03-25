@@ -48,44 +48,40 @@ endif
 
 
 ifeq ($(SYSTEM_TYPE),win)
-	LIBS += 
 	DLL = .dll
-	PRE = 
 	EXECUTABLE = main.exe
-	RUN = main
 else
 	LIBS += -ldl 
 	DLL = .so
-	PRE = ./
-	EXECUTABLE = main
-	RUN = ./main
-	PRE = ./
-	RPATH = -Wl,-rpath,
+	EXECUTABLE = main.out
 endif
 
-SONAME = -Wl,-soname,
+MODULE_RPATH = -Wl,-rpath,.,-rpath,..,-rpath,../..
+EXECUTABLE_RPATH = -Wl,-rpath,.,-rpath,dll,-rpath,dll/tmp
+CORE_RPATH = -Wl,-rpath,.,-rpath,dll,-rpath,..
 
 
 
 
 run: dll $(EXECUTABLE)
-	$(RUN)
+	./$(EXECUTABLE)
 	@echo
 
-$(EXECUTABLE): main.cpp $(PRE)counter$(DLL)
-	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
+$(EXECUTABLE): main.cpp
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS) $(EXECUTABLE_RPATH)
 	
 dll: $(DLLDIR)/example$(DLL)
 	
-$(DLLDIR)/%$(DLL): %.cpp $(PRE)counter$(DLL)
-	$(CXX) -o $@ $< $(CXXFLAGS) $(SHARED) $(RPATH)$(PRE)counter$(DLL) $(LIBS)
+$(DLLDIR)/%$(DLL): %.cpp counter$(DLL)
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(SHARED) $(MODULE_RPATH) $(LIBS)
 	
 
 counter$(DLL): ../../src/InterfaceGenerator.cpp
-	$(CXX) -o $@ $^ $(CXXFLAGS) $(SHARED)  $(SONAME)$(PRE)counter$(DLL) $(LIBS)
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(SHARED) $(LIBS)
 
 strip:
 	strip $(EXECUTABLE) $(DLLDIR)/*$(DLL) *$(DLL) 
+
 
 
 RM = rm -f
