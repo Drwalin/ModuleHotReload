@@ -306,6 +306,28 @@ public:
 		return JSON();
 	}
 	
+	
+	inline const JSON& operator[](const char* key) const {
+		return (*this)[(std::string)key];
+	}
+	inline const JSON& operator[](const std::string& key) const {
+		auto o = GetObject();
+		auto it = o.find(key);
+		if(it == o.end()) {
+			const static JSON _json;
+			return _json;
+		}
+		return it->second;
+	}
+	inline const JSON& operator[](size_t id) const {
+		auto a = GetArray();
+		if(a.size() <= id) {
+			const static JSON _json;
+			return _json;
+		}
+		return a[id];
+	}
+	
 	inline operator const array_t&() const {return GetArray();}
 	inline operator const object_t&() const {return GetObject();}
 	inline operator const string_t() const {return GetString();}
@@ -371,6 +393,29 @@ public:
 			return integer;
 		return false;
 	}
+	
+	
+	inline JSON& operator[](const char* key) {
+		return (*this)[(std::string)key];
+	}
+	inline JSON& operator[](const std::string& key) {
+		AssureType(OBJECT);
+		return AccessObject()[key];
+	}
+	inline JSON& operator[](size_t id) {
+		AssureType(ARRAY);
+		if(array->size() <= id) {
+			array->resize(id+1);
+		}
+		return array->at(id);
+	}
+	
+	inline operator array_t&() {return AccessArray();}
+	inline operator object_t&() {return AccessObject();}
+	inline operator string_t&() {return AccessString();}
+	inline operator real_t&() {return AccessReal();}
+	inline operator boolean_t&() {return AccessBoolean();}
+	inline operator integer_t&() {return AccessInteger();}
 	
 	inline array_t& Array() {return AccessArray();}
 	inline object_t& Object() {return AccessObject();}
