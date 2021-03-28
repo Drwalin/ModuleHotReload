@@ -33,6 +33,8 @@ struct VTable {
 	std::string name;
 	uint64_t id;
 	uint64_t compilationTimestamp;
+	VTable* nextVersion;
+	VTable* previousVersion;
 	std::unordered_set<void*> objects;
 	std::mutex mutex;
 };

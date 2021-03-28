@@ -27,11 +27,13 @@
 #include "TypeAsserts.hpp"
 #include "lib/CompileTime.h"
 
+/*
 #if defined(__GNUC__)
     #define __FASTCALL __attribute__((fastcall)) // __fastcall
 #elif defined(_MSC_VER)
     #define __FASTCALL __attribute__((fastcall))
 #endif
+*/
 
 template<typename T, class Class, typename... Args>
 class CLASS {
@@ -113,7 +115,9 @@ extern "C" uint64_t PopNewEmptyModuleId();
 		sizeof(Class##_struct), \
 		#Class, \
 		PopNewEmptyModuleId(), \
-		UNIX_TIMESTAMP \
+		UNIX_TIMESTAMP, \
+		NULL, \
+		NULL \
 	}; \
 	extern "C" { \
 		VTable* Class##_GetVTable() { \
