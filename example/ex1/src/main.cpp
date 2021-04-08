@@ -7,7 +7,7 @@
 #include <InterfaceGenerator.hpp>
 #include <Pointer.hpp>
 
-#include <lib/dll/DllImporter.cpp>
+#include <DllImporter.h>
 
 int main() {
 	Dll dll("dll/tmp/example");

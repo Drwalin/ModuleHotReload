@@ -2,13 +2,13 @@
 DEBUGFLAGS = -ggdb3 -g3 -ggdb -g
 PROFILEFLAGS = 
 FASTFLAGS = -Ofast
-INCLUDES = -I../../$(SRC)
+INCLUDES = -I../../$(SRC) -I../../dependencies/JSON/include -I../../dependencies/DllLoader/include
 STRIPFLAGS = -s
 CXX = g++
 SHARED = -shared -fPIC
 OBJECT = -c
 CXXFLAGS = -m64 -std=c++17 $(INCLUDES)
-LIBS =
+LIBS = -L../../dependencies/DllLoader
 MODULEDIR = dll/tmp
 CORE_DLLS = counter$(DLL)
 SRC = src
@@ -73,7 +73,7 @@ run: dll $(EXECUTABLE)
 	@echo
 
 $(EXECUTABLE): $(SRC)/main.cpp
-	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS) $(EXECUTABLE_RPATH)
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS) $(EXECUTABLE_RPATH) -lDllLoader
 	
 dll: $(MODULEDIR)/example$(DLL)
 	

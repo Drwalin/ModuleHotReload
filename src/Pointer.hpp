@@ -22,71 +22,104 @@
 #include "Object.hpp"
 #include "TypeAsserts.hpp"
 
+template<class T>
 struct Pointer {
 public:
 	
+	struct Object {
+		T* ptr;
+		std::atomic<size_t> references;
+		
+		void RemoveOne() {
+			--references;
+			if(references == 0) {
+				if(ptr) {
+					delete ptr;
+				}
+				delete this;
+			}
+		}
+		
+		void AddOne() {
+			++references;
+		}
+		
+		T* ReplaceWith(T* newPtr) {
+			T* ret = ptr;
+			ptr = newPtr;
+		}
+	};
+	
+	
 	Pointer() : self(NULL) {
 	}
-	Pointer(Object* Object) {
-		self = Object;
-		if(self)
-			self->references++;
-	}
-	Pointer(Pointer& other) {
+	
+	Pointer(Pointer<T>& other) {
 		self = other.self;
 		if(self)
 			self->references++;
 	}
-	Pointer(const Pointer& other) {
+	
+	Pointer(const Pointer<T>& other) {
 		self = (Object*)other.self;
 		if(self)
 			self->references++;
 	}
-	Pointer(Pointer&& other) {
+	
+	Pointer(Pointer<T>&& other) {
 		self = other.self;
 	}
+	
 	~Pointer() {
 		if(self)
 			self->RemoveReference();
 	}
 	
-	inline Pointer& operator=(Pointer& other) {
+	
+	inline Pointer<T>& operator=(Pointer<T>& other) {
 		self = other.self;
 		if(self)
-			self->references++;
+			self->AddOne();
 		return *this;
 	}
-	inline Pointer& operator=(const Pointer& other) {
+	
+	inline Pointer<T>& operator=(const Pointer<T>& other) {
 		self = (Object*)other.self;
 		if(self)
-			self->references++;
+			self->AddOne();
 		return *this;
 	}
-	inline Pointer& operator=(Pointer&& other) {
+	
+	inline Pointer<T>& operator=(Pointer<T>&& other) {
 		self = other.self;
 		return *this;
 	}
-		
 	
-	inline VTable* GetVTable() const {
-		if(self)
-			return *(VTable**)self;
+	
+	inline bool operator==(const Pointer<T>& other) const {
+		return self == other.self;
 	}
 	
-	template<typename T, typename... Args>
-	inline T Call(size_t methodId, Args... args) {
-		static_assert(InvalidArgumentTypes<Args...>::sum==0, "Argument can be only of pointer or primitive type");
-		return (
-				(T (*)(void*,Args...))
-				(self->vtable()->
-				 methods[methodId]
-				)
-			   )(self->object(), args...);
+	inline bool operator!=(const Pointer<T>& other) const {
+		return self != other.self;
 	}
+	
+	
+	
+	
+	inline T* operator->() {return self->ptr;}
+	inline const T* operator->() const {return self->ptr;}
 	
 	inline operator bool() const {
-		return self && self->self;
+		return self && self->ptr;
 	}
+	
+	struct Hash {
+		size_t operator(const Pointer<T>& value) const {
+			constexpr const static int shift = log2(1+sizeof(T));
+			return ((size_t)value.self) >> shift;
+		}
+	};
 	
 	Object* self;
 };

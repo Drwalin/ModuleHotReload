@@ -1,0 +1,6 @@
+[submodule "dependencies/JSON"]
+	path = dependencies/JSON
+	url = https://github.com/Drwalin/JSON.git
+[submodule "dependencies/DllLoader"]
+	path = dependencies/DllLoader
+	url = https://github.com/Drwalin/DllLoader.git
