@@ -1,6 +1,7 @@
 
-#include "interface.hpp"
-#include "../../dependencies/DllLoader/src/DllImporter.cpp"
+#include <interface.hpp>
+//#include "../../dependencies/DllLoader/src/DllImporter.cpp"
+#include <DllImporter.cpp>
 
 #include <vector>
 #include <string>
@@ -23,7 +24,7 @@ int main() {
 		if(c == 'q')
 			break;
 		else if(c == 'n') {
-			std::string name = std::string("_")+std::to_string(clock());
+			std::string name = std::string("dll/_")+std::to_string(clock());
 			printf("\n\n");
 			std::string cmd = std::string("make ") + name + ".dll";
 			int beg = clock();

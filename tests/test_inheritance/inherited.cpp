@@ -17,7 +17,7 @@ public:
 	
 	virtual int function(int arg) override {
 		value += arg+17;
-		return value-17;
+		return value-17-Interface::FUN();
 	}
 	
 	virtual int Getter() override {

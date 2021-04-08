@@ -4,8 +4,8 @@
 class Base {
 public:
 	
-	Base() {}
-	virtual ~Base() {}
+	Base();
+	virtual ~Base();
 	
 	virtual int function(int arg)=0;
 };
