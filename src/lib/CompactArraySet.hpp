@@ -1,5 +1,5 @@
 /*
- *  This file is part of ModulHotReload. Please see README for details.
+ *  This file is part of ModuleHotReload. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
  *  ICon3 is free software: you can redistribute it and/or modify
@@ -159,9 +159,6 @@ public:
 	
 	inline void erase(const T&value) {
 		auto all = all_of(value);
-		std::cout << all.end()-all.begin();
-		for(int e : all)
-			std::cout<<"   " <<e;
 		CompactArray<T>::erase(all.begin(), all.end());
 	}
 	
