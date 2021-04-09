@@ -2,7 +2,7 @@
 DEBUGFLAGS = -ggdb3 -g3 -ggdb -g
 PROFILEFLAGS = 
 FASTFLAGS = -Ofast
-INCLUDES = -I../../$(SRC) -I../../dependencies/JSON/include -I../../dependencies/DllLoader/include
+INCLUDES = -I../../$(SRC) -I../../dep/JSON/include -I../../dep/DllLoader/include
 STRIPFLAGS = -s
 CXX = g++
 SHARED = -shared -fPIC

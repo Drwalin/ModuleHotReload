@@ -1,9 +1,9 @@
 [submodule "dependencies/JSON"]
-	path = dependencies/JSON
+	path = dep/JSON
 	url = https://github.com/Drwalin/JSON.git
 [submodule "dependencies/DllLoader"]
-	path = dependencies/DllLoader
+	path = dep/DllLoader
 	url = https://github.com/Drwalin/DllLoader.git
 [submodule "dependencies/MakefileSTD"]
-	path = dependencies/MakefileSTD
+	path = dep/MakefileSTD
 	url = https://github.com/Drwalin/MakefileSTD.git
