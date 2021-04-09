@@ -1,12 +1,10 @@
 
-#include <interface.hpp>
-//#include "../../dependencies/DllLoader/src/DllImporter.cpp"
+#include "interface.hpp"
 #include <DllImporter.cpp>
 
 #include <vector>
 #include <string>
 #include <cstdlib>
-#include <conio.h>
 #include <ctime>
 
 #include "inherited.cpp"
@@ -15,18 +13,15 @@ int main() {
 	std::vector<Base*> ptrs;
 	std::vector<Dll*>  dlls;
 	
-	//delete Dll("d").Get<Base*(*)()>("d")();
-	
-	
 	for(int I=0;;) {
-		int c = getch();
+		int c = getchar();
 		
 		if(c == 'q')
 			break;
 		else if(c == 'n') {
 			std::string name = std::string("dll/_")+std::to_string(clock());
 			printf("\n\n");
-			std::string cmd = std::string("make ") + name + ".dll";
+			std::string cmd = std::string("make ") + name + GetDllExtension();
 			int beg = clock();
 			if(system(cmd.c_str()) == 0) {
 				Dll* dll = new Dll(name.c_str());
@@ -67,11 +62,6 @@ int main() {
 		}
 	}
 	
-	
-	delete ptrs[0];
-	ptrs[0] = NULL;
-	delete dlls[0];
-	dlls[0] = NULL;
 	
 	for(auto& d : ptrs) {
 		delete d;

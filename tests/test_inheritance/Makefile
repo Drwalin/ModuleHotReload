@@ -1,17 +1,24 @@
 
-CFLAGS = -Ofast -std=c++17 -Wall -pedantic -m64 -I../../dependencies/DllLoader/src -s
+include mk/Makefile.mk
+
+CFLAGS = -Ofast -std=c++17 -Wall -pedantic -I../../dependencies/DllLoader/src -s
 SHARED = -shared -fPIC
 
-main.exe: core.dll main.cpp
-	g++ $^ -o $@ $(CFLAGS)
+ifeq ($(platform),win)
+else
+	LIBS += -ldl
+endif
 
-core.dll: base.cpp interface.cpp
-	g++ $^ -o $@ $(CFLAGS) $(SHARED)
+main$(EXE_EXT): core$(SHARED_EXT) main.cpp
+	g++ $^ -o $@ $(CFLAGS) -Wl,-rpath,. $(LIBS)
 
-dll/%.dll: core.dll inherited.cpp
-	g++ $^ -o $@ $(CFLAGS) $(SHARED) -Wl,-rpath,.,-rpath,..,-rpath,../..
+core$(SHARED_EXT): base.cpp interface.cpp
+	g++ $^ -o $@ $(CFLAGS) $(SHARED) -Wl,-rpath,. $(LIBS)
+
+dll/%$(SHARED_EXT): ./core$(SHARED_EXT) inherited.cpp
+	g++ $^ -o $@ $(CFLAGS) $(SHARED) -Wl,-rpath,.,-rpath,..,-rpath,../.. $(LIBS)
 
 .PHONY: clean
 clean:
-	rm -f *.dll *.exe dll/*.dll
+	$(RM) main$(EXE_EXT) *$(SHARED_EXT) dll/*$(SHARED_EXT)
 
