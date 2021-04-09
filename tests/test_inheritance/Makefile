@@ -1,5 +1,5 @@
 
-include mk/Makefile.mk
+include ../../dependencies/MakefileSTD/MakefileSTD
 
 CFLAGS = -Ofast -std=c++17 -Wall -pedantic -I../../dependencies/DllLoader/src -s
 SHARED = -shared -fPIC
