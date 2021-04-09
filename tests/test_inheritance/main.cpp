@@ -1,6 +1,6 @@
 
 #include "interface.hpp"
-#include <DllImporter.cpp>
+#include <DllImporter.h>
 
 #include <vector>
 #include <string>
