@@ -16,26 +16,47 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef VTABLE_HPP
-#define VTABLE_HPP
+#ifndef COMPILER_HPP
+#define COMPILER_HPP
 
-#include <cinttypes>
 #include <string>
-#include <atomic>
 #include <mutex>
-#include <unordered_set>
 
-struct VTable {
-	void** methods;
-	void* (*allocate)();
-	void (*free)(void*);
-	size_t size;
-	std::string name;
-	uint64_t id;
-	uint64_t compilationTimestamp;
-	VTable* nextVersion;
-	VTable* previousVersion;
-	std::unordered_set<void*> objects;
+#include <DllImporter.h>
+
+class Compiler {
+public:
+	
+	enum {
+		PRODUCTION,
+		DEBUG,
+		DEFAULT
+	} Mode;
+	
+	Compiler(const std::string& compilerInfoFile);
+	~Compiler();
+	
+	std::shared_ptr<Dll> CompileAndLoad(const std::string& file, Mode mode=DEFAULT);
+	
+private:
+	
+	std::string Compile(const std::string& file, Mode mode);
+	
+	std::string compiler;
+	
+	struct {
+		std::string debug;
+		std::string production;
+		std::string standard;
+	} flags;
+	
+	std::string includes;
+	std::string libraries;
+	std::string dllLocation;
+	std::string tmpLocation;
+	
+	std::vector<std::string> logs;
+	
 	std::mutex mutex;
 };
 
