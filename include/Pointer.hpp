@@ -70,13 +70,24 @@ public:
 		self = other.self;
 	}
 	
+	template<typename T2>
+	Pointer(Pointer<T2>::Object* object) {
+		self = (Object*)object;
+	}
+	
 	~Pointer() {
+		RemoveRef();
+	}
+	
+	inline void RemoveRef() {
 		if(self)
-			self->RemoveReference();
+			self->RemoveOne();
+		self = NULL;
 	}
 	
 	
 	inline Pointer<T>& operator=(Pointer<T>& other) {
+		RemoveRef();
 		self = other.self;
 		if(self)
 			self->AddOne();
@@ -84,6 +95,7 @@ public:
 	}
 	
 	inline Pointer<T>& operator=(const Pointer<T>& other) {
+		RemoveRef();
 		self = (Object*)other.self;
 		if(self)
 			self->AddOne();
@@ -91,21 +103,50 @@ public:
 	}
 	
 	inline Pointer<T>& operator=(Pointer<T>&& other) {
+		RemoveRef();
 		self = other.self;
 		return *this;
 	}
 	
 	
-	inline bool operator==(const Pointer<T>& other) const {
+	template<typename T2>
+	inline bool operator==(const Pointer<T2>& other) const {
 		return self == other.self;
 	}
 	
-	inline bool operator!=(const Pointer<T>& other) const {
+	template<typename T2>
+	inline bool operator!=(const Pointer<T2>& other) const {
 		return self != other.self;
+	}
+	
+	template<typename T2>
+	inline bool operator<(const Pointer<T2>& other) const {
+		return self < other.self;
+	}
+	
+	template<typename T2>
+	inline bool operator<=(const Pointer<T2>& other) const {
+		return self <= other.self;
+	}
+	
+	template<typename T2>
+	inline bool operator>=(const Pointer<T2>& other) const {
+		return self >= other.self;
+	}
+	
+	template<typename T2>
+	inline bool operator>(const Pointer<T2>& other) const {
+		return self > other.self;
 	}
 	
 	
 	
+	template<typename T2>
+	Pointer<T2> CastTo() {
+		if(dynamic_cast<T2*>(self->ptr))
+			return Pointer<T2>(self);
+		return Pointer<T2>();
+	}
 	
 	inline T* operator->() {return self->ptr;}
 	inline const T* operator->() const {return self->ptr;}
