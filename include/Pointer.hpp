@@ -16,40 +16,65 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef VTABLE_POINTER_HPP
-#define VTABLE_POINTER_HPP
+#ifndef POINTER_HPP
+#define POINTER_HPP
 
-#include "Object.hpp"
-#include "TypeAsserts.hpp"
+#include <atomic>
+#include <cinttypes>
+#include <cstddef>
+#include <cmath>
 
-template<class T>
-struct Pointer {
+template<typename T>
+class Pointer {
 public:
 	
-	struct Object {
-		T* ptr;
-		std::atomic<size_t> references;
-		
-		void RemoveOne() {
-			--references;
-			if(references == 0) {
-				if(ptr) {
-					delete ptr;
-				}
-				delete this;
-			}
+	class Object {
+	public:
+		Object(T* _ptr=NULL) {
+			ptr = _ptr;
+			references = 0;
 		}
 		
-		void AddOne() {
+		inline void Decrement() {
+			--references;
+			if(references == 0)
+				delete this;
+		}
+		
+		inline void AddOne() {
 			++references;
 		}
 		
-		T* ReplaceWith(T* newPtr) {
+		inline T* ReplaceWith(T* newPtr) {
 			T* ret = ptr;
 			ptr = newPtr;
 		}
+		
+		inline void Increment() {
+			++references;
+		}
+		
+		friend class Pointer<T>;
+		
+	private:
+		~Object() {
+			if(ptr)
+				delete ptr;
+			ptr = NULL;
+			references = 0;
+		}
+		T* ptr;
+		std::atomic<size_t> references;
 	};
 	
+	Pointer(T* ptr) {
+		if(ptr) {
+			self = new Object(ptr);
+			self->Increment();
+		} else {
+			self = NULL;
+		}
+	}
 	
 	Pointer() : self(NULL) {
 	}
@@ -57,22 +82,17 @@ public:
 	Pointer(Pointer<T>& other) {
 		self = other.self;
 		if(self)
-			self->references++;
+			self->Increment();
 	}
 	
 	Pointer(const Pointer<T>& other) {
 		self = (Object*)other.self;
 		if(self)
-			self->references++;
+			self->Increment();
 	}
 	
 	Pointer(Pointer<T>&& other) {
 		self = other.self;
-	}
-	
-	template<typename T2>
-	Pointer(Pointer<T2>::Object* object) {
-		self = (Object*)object;
 	}
 	
 	~Pointer() {
@@ -81,7 +101,7 @@ public:
 	
 	inline void RemoveRef() {
 		if(self)
-			self->RemoveOne();
+			self->Decrement();
 		self = NULL;
 	}
 	
@@ -155,8 +175,10 @@ public:
 		return self && self->ptr;
 	}
 	
+private:
+	
 	struct Hash {
-		size_t operator(const Pointer<T>& value) const {
+		size_t operator()(const Pointer<T>& value) const {
 			constexpr const static int shift = log2(1+sizeof(T));
 			return ((size_t)value.self) >> shift;
 		}
