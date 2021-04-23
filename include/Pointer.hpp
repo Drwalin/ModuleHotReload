@@ -24,6 +24,31 @@
 #include <cstddef>
 #include <cmath>
 
+#include <iostream>
+
+template <class T >
+inline std::string MethodName(const std::string& prettyFunction) {
+	std::string ret = prettyFunction;
+	size_t index = 0;
+	
+	while(true) {
+		index = ret.find("::__cxx11");
+		if(index == std::string::npos)
+			break;
+		ret.replace(index, 9, "");
+	}
+	
+	index = ret.find(" [");
+	if(index != std::string::npos)
+		ret.resize(index);
+	
+	return ret;
+}
+#define __METHOD_NAME__ (MethodName<int>(__PRETTY_FUNCTION__))
+
+#define DEBUG(x) { std::cerr << " " << __METHOD_NAME__ << "(" << (x) << ") " << __FILE__ << ":" << __LINE__ << "\n"; std::cerr.flush(); }
+#define MESSAGE(x) { std::cerr << " " << __METHOD_NAME__ << "(" << (x) << ") " << __FILE__ << ":" << __LINE__ << "\n"; std::cerr.flush();  }
+
 template<typename T>
 class Pointer {
 public:
@@ -31,26 +56,32 @@ public:
 	class Object {
 	public:
 		Object(T* _ptr=NULL) {
+//			MESSAGE(references);
 			ptr = _ptr;
 			references = 0;
 		}
 		
 		inline void Decrement() {
+//			MESSAGE(references);
 			--references;
 			if(references == 0)
 				delete this;
 		}
 		
 		inline void AddOne() {
+//			MESSAGE(references);
 			++references;
 		}
 		
 		inline T* ReplaceWith(T* newPtr) {
+//			MESSAGE(references);
 			T* ret = ptr;
 			ptr = newPtr;
+			return ret;
 		}
 		
 		inline void Increment() {
+//			MESSAGE(references);
 			++references;
 		}
 		
@@ -58,6 +89,7 @@ public:
 		
 	private:
 		~Object() {
+//			MESSAGE(references);
 			if(ptr)
 				delete ptr;
 			ptr = NULL;
@@ -74,32 +106,40 @@ public:
 		} else {
 			self = NULL;
 		}
+//			MESSAGE(self?(long long)(self->references):-1);
 	}
 	
 	Pointer() : self(NULL) {
+//			MESSAGE(self?(long long)(self->references):-1);
 	}
 	
 	Pointer(Pointer<T>& other) {
 		self = other.self;
 		if(self)
 			self->Increment();
+//			MESSAGE(self?(long long)(self->references):-1);
 	}
 	
 	Pointer(const Pointer<T>& other) {
 		self = (Object*)other.self;
 		if(self)
 			self->Increment();
+//			MESSAGE(self?(long long)(self->references):-1);
 	}
 	
 	Pointer(Pointer<T>&& other) {
 		self = other.self;
+//			MESSAGE(self?(long long)(self->references):-1);
 	}
 	
 	~Pointer() {
+//			MESSAGE(self?(long long)(self->references):-1);
 		RemoveRef();
+//			MESSAGE(self?(long long)(self->references):-1);
 	}
 	
 	inline void RemoveRef() {
+//			MESSAGE(self?(long long)(self->references):-1);
 		if(self)
 			self->Decrement();
 		self = NULL;
@@ -111,6 +151,7 @@ public:
 		self = other.self;
 		if(self)
 			self->AddOne();
+//			MESSAGE(self?(long long)(self->references):-1);
 		return *this;
 	}
 	
@@ -119,12 +160,14 @@ public:
 		self = (Object*)other.self;
 		if(self)
 			self->AddOne();
+//			MESSAGE(self?(long long)(self->references):-1);
 		return *this;
 	}
 	
 	inline Pointer<T>& operator=(Pointer<T>&& other) {
 		RemoveRef();
 		self = other.self;
+//			MESSAGE(self?(long long)(self->references):-1);
 		return *this;
 	}
 	
@@ -170,22 +213,54 @@ public:
 	
 	inline T* operator->() {return self->ptr;}
 	inline const T* operator->() const {return self->ptr;}
+	inline T& operator*(int) {return *self->ptr;}
+	inline const T& operator*(int) const {return *self->ptr;}
 	
 	inline operator bool() const {
 		return self && self->ptr;
 	}
 	
-private:
+	inline T* ReplaceWith(T* newPointer) {
+//			MESSAGE(self?(long long)(self->references):-1);
+		if(!self) {
+			this->operator=(Pointer<T>(newPointer));
+//			MESSAGE(self?(long long)(self->references):-1);
+			return NULL;
+		}
+		return self->ReplaceWith(newPointer);
+	}
 	
 	struct Hash {
-		size_t operator()(const Pointer<T>& value) const {
+		inline size_t operator()(const Pointer<T>& value) const {
 			constexpr const static int shift = log2(1+sizeof(T));
 			return ((size_t)value.self) >> shift;
 		}
 	};
 	
+	inline T* _get() {
+//			MESSAGE(self?(long long)(self->references):-1);
+		return self->ptr;
+	}
+	
+	inline const T* _get() const {
+//			MESSAGE(self?(long long)(self->references):-1);
+		return self->ptr;
+	}
+	
+private:
+	
 	Object* self;
 };
+
+#include <functional>
+
+namespace std {
+	template<typename T>
+	struct hash<Pointer<T>> : public Pointer<T>::Hash {
+		using size_type = size_t;
+		using argument_type = Pointer<T>;
+	};
+}
 
 #endif
 
