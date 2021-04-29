@@ -17,8 +17,6 @@ int main() {
 		d = D->Get<std::shared_ptr<Class<Interface>>(*)(std::shared_ptr<Dll>)>("GetClass")(D);
 	}
 	
-	printf("a = 0x%p\n", (void*)a.get());
-	
 	Pointer<Interface> _1 = a->GetNew();
 	Pointer<Interface> _2 = b->GetNew();
 	Pointer<Interface> _3 = c->GetNew();
