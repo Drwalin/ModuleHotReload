@@ -2,12 +2,12 @@
  *  This file is part of ModuleHotReload. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
- *  ICon3 is free software: you can redistribute it and/or modify
+ *  This is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  ICon3 is distributed in the hope that it will be useful,
+ *  This is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -22,6 +22,22 @@
 #include <fstream>
 #include <cstdlib>
 
+CompilationResult::CompilationResult() {
+	returnCode = 0;
+}
+
+void CompilationResult::PrintErrors() {
+	if(returnCode == 0)
+		return;
+	std::cout << "\n\n Error " << returnCode << " while compiling: " <<
+		fileName << "\n" << log << "\n\n";
+}
+
+CompilationResult::operator bool() const {
+	return returnCode==0;
+}
+
+
 Compiler::Compiler(const std::string& compilerInfoFile) {
 	std::ifstream file(compilerInfoFile);
 	if(file.good()) {
@@ -34,9 +50,6 @@ Compiler::Compiler(const std::string& compilerInfoFile) {
 		std::getline(file, dllLocation);
 		std::getline(file, tmpLocation);
 	}
-}
-
-Compiler::~Compiler() {
 }
 
 std::shared_ptr<Dll> Compiler::CompileAndLoad(const std::string& file,
@@ -77,19 +90,26 @@ std::string Compiler::Compile(const std::string& file, Mode mode) const {
 		+ "-o \"" + dllFileName + "\""
 		+ " > \"" + logFileName + "\" 2>&1";
 	
-	int result = system(command.c_str());
+	int returnCode = system(command.c_str());
+	
+	CompilationResult result;
+	result.fileName = file;
+	result.returnCode = returnCode;
 	
 	std::ifstream log(logFileName, std::ios::binary);
-	std::string logContent;
 	if(file.good())
-		logContent = std::string(
+		result.log = std::string(
 				std::istreambuf_iterator<char>(t),
 				std::istreambuf_iterator<char>());
 	
 	std::guard_lock<std::mutex> lock(mutex);
-	logs.emplace_back(logContent);
-	if(result)
+	logs.Add(result);
+	if(returnCode)
 		return dllFileName;
 	return "";
+}
+
+CompilationResult Compiler::PopCompilationResult() {
+	return logs.Pop();
 }
 

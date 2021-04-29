@@ -2,12 +2,12 @@
  *  This file is part of ModuleHotReload. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
- *  ICon3 is free software: you can redistribute it and/or modify
+ *  This is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  ICon3 is distributed in the hope that it will be useful,
+ *  This is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -18,16 +18,12 @@
 
 #include "Class.hpp"
 
-ClassBase::ClassBase() {}
-ClassBase::~ClassBase() {}
-
 template<typename Base, typename... ConstructorArgs>
 Class<Base, ConstructorArgs...>::Class(
 		std::shared_ptr<Dll> dll,
 		const std::string& className,
 		size_t typeSize,
 		std::shared_ptr<ConstructorBase<Base, ConstructorArgs...>> allocator) :
-		ClassBase(),
 		std::enable_shared_from_this<Class<Base, ConstructorArgs...>>(),
 		dll(dll),
 		_name(className),
@@ -80,6 +76,85 @@ std::shared_ptr<Dll> Class<Base, ConstructorArgs...>::GetDll() {
 template<typename Base, typename... ConstructorArgs>
 Class<Base, ConstructorArgs...>::~Class() {
 }
+
+
+template<typename Base, typename... ConstructorArgs>
+void Class<Base, ConstructorArgs...>::AddParentClass(std::shared_ptr<ClassType> parentClass) {
+	if(!IsClassInATree(parentClass)) {
+		directParentClasses.insert(parentClass);
+		parentClass->AddChildClass(Self());
+	}
+}
+
+template<typename Base, typename... ConstructorArgs>
+void Class<Base, ConstructorArgs...>::AddChildClass(std::shared_ptr<ClassType> childClass) {
+	if(!IsClassInATree(childClass)) {
+		directChildrenClasses.insert(childClass);
+		childClass->AddParentClass(Self());
+	}
+
+}
+
+template<typename Base, typename... ConstructorArgs>
+void Class<Base, ConstructorArgs...>::GetChildrenClasses(std::set<std::shared_ptr<ClassType>>& classes) {
+	classes.insert(Self());
+	for(auto it : directChildrenClasses)
+		it->GetChildrenClasses(classes);
+}
+
+
+template<typename Base, typename... ConstructorArgs>
+bool Class<Base, ConstructorArgs...>::IsClassInATree(std::shared_ptr<ClassType> newClass) {
+	return IsClassIndirectParent(newClass) | IsClassIndirectChild(newClass);
+}
+
+template<typename Base, typename... ConstructorArgs>
+bool Class<Base, ConstructorArgs...>::IsClassIndirectParent(std::shared_ptr<ClassType> parentClass) {
+	if(Self() == parentClass)
+		return true;
+	bool result = false;
+	for(auto it : directParentClasses)
+		result |= it->IsClassIndirectParent(parentClass);
+	return result;
+}
+
+template<typename Base, typename... ConstructorArgs>
+bool Class<Base, ConstructorArgs...>::IsClassIndirectChild(std::shared_ptr<ClassType> childClass) {
+	if(Self() == childClass)
+		return true;
+	bool result = false;
+	for(auto it : directChildrenClasses)
+		result |= it->IsClassIndirectParent(childClass);
+	return result;
+}
+
+
+
+template<typename Base, typename... ConstructorArgs>
+void Class<Base, ConstructorArgs...>::RemoveParentClass(std::shared_ptr<ClassType> parentClass) {
+	auto it = directParentClasses.find(parentClass);
+	if(it != directParentClasses.end()) {
+		directParentClasses.erase(it);
+		parentClass->RemoveChildClass(Self());
+	} else {
+		for(auto p : directParentClasses)
+			p->RemoveParentClass(parentClass);
+	}
+}
+
+template<typename Base, typename... ConstructorArgs>
+void Class<Base, ConstructorArgs...>::RemoveChildClass(std::shared_ptr<ClassType> childClass) {
+	auto it = directChildrenClasses.find(childClass);
+	if(it != directChildrenClasses.end()) {
+		directChildrenClasses.erase(it);
+		childClass->RemoveParentClass(Self());
+	} else {
+		for(auto p : directChildrenClasses)
+			p->RemoveChildClass(childClass);
+	}
+}
+
+
 
 template<typename Base, typename... ConstructorArgs>
 size_t Class<Base, ConstructorArgs...>::InternalUpdateAndClearClasses(size_t max,

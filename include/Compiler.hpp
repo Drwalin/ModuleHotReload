@@ -2,12 +2,12 @@
  *  This file is part of ModuleHotReload. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
- *  ICon3 is free software: you can redistribute it and/or modify
+ *  This is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  ICon3 is distributed in the hope that it will be useful,
+ *  This is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -21,8 +21,27 @@
 
 #include <string>
 #include <mutex>
+#include <iostream>
 
 #include <DllImporter.h>
+
+#include "ConcurrentQueue.hpp"
+
+class CompilationResult {
+public:
+	
+	CompilationResult();
+	~CompilationResult() = default;
+	
+	void PrintErrors();
+	operator bool() const;
+	
+public:
+	
+	std::string fileName;
+	std::string log;
+	int returnCode;
+};
 
 class Compiler {
 public:
@@ -34,9 +53,10 @@ public:
 	} Mode;
 	
 	Compiler(const std::string& compilerInfoFile);
-	~Compiler();
+	~Compiler() = default;
 	
 	std::shared_ptr<Dll> CompileAndLoad(const std::string& file, Mode mode=DEFAULT);
+	CompilationResult PopCompilationResult();
 	
 private:
 	
@@ -55,9 +75,7 @@ private:
 	std::string dllLocation;
 	std::string tmpLocation;
 	
-	std::vector<std::string> logs;
-	
-	std::mutex mutex;
+	ConcurrentQueue<CompilationResult> logs;
 };
 
 #endif
