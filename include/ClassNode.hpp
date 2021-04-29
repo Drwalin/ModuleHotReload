@@ -21,21 +21,9 @@
 
 #include "VersionClassContainer.hpp"
 
-class ClassNodeBase {
-public:
-	
-	ClassNodeBase() {}
-	~ClassNodeBase() {}
-	
-	virtual void Recompile() = 0;
-};
-
-template<typename Base, typename... ConstructorArgs>
 class ClassNode :
-	public std::enable_shared_from_this<Class<Base, ConstructorArgs...>> {
+	public std::enable_shared_from_this<ClassNode> {
 public:
-	
-	using ClassType = ClassNode<Base, ConstructorArgs...>;
 	
 	ClassNode(const std::string& sourceFile,
 			const std::string& className,
@@ -43,23 +31,23 @@ public:
 			classVersions(sourceFile, className, compiler) {
 	}
 	
-	inline std::shared_ptr<ClassType> Self() {
-		return std::enable_shared_from_this<ClassType>::
+	inline std::shared_ptr<ClassNode> Self() {
+		return std::enable_shared_from_this<ClassNode>::
 			shared_from_this();
 	}
 	
-	inline void AddChildClass(std::shared_ptr<ClassType> ptr) {
+	inline void AddChildClass(std::shared_ptr<ClassNode> ptr) {
 		if(!IsClassInTree(ptr)) {
 			children.insert(ptr);
 			ptr->parent = Self();
 		}
 	}
 	
-	inline std::shared_ptr<ClassType> GetParent() {
+	inline std::shared_ptr<ClassNode> GetParent() {
 		return parent;
 	}
 	
-	inline std::set<std::shared_ptr<ClassType>> GetChildren() {
+	inline std::set<std::shared_ptr<ClassNode>> GetChildren() {
 		return children;
 	}
 	
@@ -67,21 +55,22 @@ public:
 		return classVersions.Update(count);
 	}
 	
-	inline Pointer<Base> New(ConstructorArgs... args) {
+	inline Pointer<Object> New(ConstructorArgs... args) {
 		return classVersions.New(args...);
 	}
 	
-	virtual bool Recompiler() override {
+	bool Recompiler() {
 		return classVersions.Recompiler();
 	}
 	
 private:
 	
-	bool IsClassInTree(std::shared_ptr<ClassType> ptr) {
+	bool IsClassInTree(std::shared_ptr<ClassNode> ptr) {
 		return IsClassInTree(ptr, NULL);
 	}
 	
-	bool IsClassInTree(std::shared_ptr<ClassType> ptr, std::shared_ptr<ClassType> org) {
+	bool IsClassInTree(std::shared_ptr<ClassNode> ptr,
+			std::shared_ptr<ClassNode> org) {
 		bool result = false;
 		if(parent != org)
 			result |= parent->IsClassInTree(ptr, Self());
@@ -91,10 +80,10 @@ private:
 		return result;
 	}
 	
-	VersionClassContainer<Base, ConstructorArgs...> classVersions;
+	VersionClassContainer classVersions;
 	
-	std::set<std::shared_ptr<ClassType>> children;
-	std::shared_ptr<ClassType> parent;
+	std::set<std::shared_ptr<ClassNode>> children;
+	std::shared_ptr<ClassNode> parent;
 };
 
 #endif

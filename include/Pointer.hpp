@@ -171,10 +171,22 @@ public:
 		return Pointer<T2>();
 	}
 	
-	inline T* operator->() {return self->ptr;}
-	inline const T* operator->() const {return self->ptr;}
-	inline T& operator*(int) {return *self->ptr;}
-	inline const T& operator*(int) const {return *self->ptr;}
+	
+	inline T* operator->() {
+		return self->ptr;
+	}
+	
+	inline const T* operator->() const {
+		return self->ptr;
+	}
+	
+	inline T& operator*(int) {
+		return *self->ptr;
+	}
+	
+	inline const T& operator*(int) const {
+		return *self->ptr;
+	}
 	
 	inline operator bool() const {
 		return self && self->ptr;

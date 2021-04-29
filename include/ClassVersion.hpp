@@ -25,36 +25,61 @@
 
 #include <DllImporter.h>
 
-template<typename Base, typename... Args>
-class ConstructorBase {
-public:
-	virtual Base* New(Args... args) const = 0;
-	virtual Base* Renew(Pointer<Base> old) const = 0;
-};
-
-template<typename Final, typename Base, typename... Args>
-class Constructor : public ConstructorBase<Base, Args...>{
-public:
-	virtual Base* New(Args... args) const override {
-		return new Final(args...);
-	}
-	virtual Base* Renew(Pointer<Base> old) const override {
-		return new Final(old);
-	}
-};
-
-template<typename Base, typename... ConstructorArgs>
-class ClassVersion {
+class Object {
 public:
 	
-	using ClassType = ClassVersion<Base, ConstructorArgs...>;
+	Object() = default;
+	virtual ~Object() = default;
+	
+	virtual class ClassVersion* _RTTI(class ClassVersion* classPtr = NULL)
+		const = 0;
+};
+
+#define CLASS_RTTI public: virtual class ClassVersion* _RTTI( \
+		class ClassVersion* classPtr) const override { \
+			static class ClassVersion* ptr = NULL; \
+			if(ptr == NULL) \
+				ptr = classPtr; \
+			return ptr; \
+		}
+
+#define CLASS_CONSTRUCTOR(CLASS) void ClassInitializer_##CLASS(ClassVersion* \
+		classPtr) { \
+			classPtr->Init<CLASS>(); \
+		}
+
+class Constructor {
+public:
+	
+	Constructor(Object* (*_new)(), Object* (*_renew)(Pointer<Object>)) :
+		_new(_new), _renew(_renew) {
+	}
+	
+	~Constructor() = default;
+	
+	inline Object* New() const {
+		return _new();
+	}
+	
+	inline Object* Renew(Pointer<Object> old) const {
+		return _renew(old);
+	}
+	
+private:
+	
+	const Object* (*_new)();
+	const Object* (*_renew)(Pointer<Object>);
+};
+
+class ClassVersion {
+public:
 	
 	VersionClassContainer(std::shared_ptr<Dll> dll,
 			const std::string& dllFileName,
 			const std::string& classNam) :
 			dll(dll), dllFileName(dllFileName), className(className) {
 		if(dll)
-			dll->Get<void (*)(ClassVersion<Base, ConstructorArgs...>*)>
+			dll->Get<void (*)(ClassVersion*)>
 				((std::string("ClassInitializer_")+className).c_str())(this);
 	}
 	
@@ -64,25 +89,32 @@ public:
 	template<typename Class>
 	inline void Init() {
 		size = sizeof(Class);
-		constructor = new Constructor<Class, Base, ConstructorArgs...>();
+		constructor = new Constructor(
+				[]()->Object*{return new Class();},
+				[](Pointer<Object>ptr)->Object*{return new Class(ptr);}
+				);
+	}
+	
+	inline Pointer<Object> New(ConstructorArgs... args) {
+		if(constructor) {
+			auto ptr = Constructor->New(args...);
+			ptr->RTTI(this);
+			return ptr;
+		}
+		return NULL;
+	}
+	
+	inline Pointer<Object> Renew(Pointer<Object> old) {
+		if(!(constructor && old))
+			return NULL;
+		Object* newPtr = constructor->Renew(old);
+		newPtr->RTTI(this);
+		delete ptr.ReplaceObject(newPtr);
+		return old;
 	}
 	
 	inline std::shared_ptr<Dll> GetDll() {
 		return dll;
-	}
-	
-	inline Pointer<Base> New(ConstructorArgs... args) {
-		if(constructor)
-			return Constructor->New(args...);
-		return NULL;
-	}
-	
-	inline Pointer<Base> Renew(Pointer<Base> old) {
-		if(!(constructor && old))
-			return NULL;
-		Base* newPtr = constructor->Renew(old);
-		delete ptr.ReplaceObject(newPtr);
-		return old;
 	}
 	
 	inline size_t GetSize() const {
@@ -93,15 +125,15 @@ public:
 		return className;
 	}
 	
-	inline std::set<Pointer<Base>>& GetObjects() {
+	inline std::set<Pointer<Object>>& GetObjects() {
 		return objects;
 	}
 	
 private:
 	
-	std::set<Pointer<Base>> objects;
+	std::set<Pointer<Object>> objects;
 	
-	std::shared_ptr<Constructor<Base, ConstructorArgs...>> constructor;
+	std::shared_ptr<Constructor> constructor;
 	
 	std::shared_ptr<Dll> dll;
 	std::string dllFileName;
