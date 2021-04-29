@@ -45,7 +45,7 @@ public:
 	}
 	
 	
-	inline void RequestUpdate(std::shared_ptr<ClassNodeBase> node) {
+	inline void RequestUpdate(std::shared_ptr<ClassNode> node) {
 		compilationQueue.emplace_back(node);
 	}
 	
@@ -53,7 +53,7 @@ public:
 		while(close == false) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			if(!compilationQueue.empty()) {
-				std::shared_ptr<ClassNodeBase> node;
+				std::shared_ptr<ClassNode> node;
 				if(!compileationQueue.Pop(node))
 					continue;
 				if(node) {
@@ -68,7 +68,7 @@ public:
 	
 private:
 	
-	ConcurrentQueue<std::shared_ptr<ClassNodeBase>> compilationQueue;
+	ConcurrentQueue<std::shared_ptr<ClassNode>> compilationQueue;
 	
 	std::shared_ptr<Compiler> compiler;
 	std::mutex mutex;

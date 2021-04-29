@@ -25,11 +25,8 @@
 #include "ClassVersion.hpp"
 #include "ClassSource.hpp"
 
-template<typename Base, typename... ConstructorArgs>
 class VersionClassContainer {
 public:
-	
-	using ClassType = ClassVersion<Base, ConstructorArgs...>;
 	
 	VersionClassContainer(const std::string& sourceFile,
 			const std::string& className,
@@ -68,11 +65,11 @@ public:
 		return UpdateToImmidiateNext(count);
 	}
 	
-	inline ClassSource<Base, ConstructorArgs...>& GetSource(); {
+	inline ClassSource& GetSource(); {
 		return source;
 	}
 	
-	inline Pointer<Base> New(ConstructorArgs... args) {
+	inline Pointer<Object> New(ConstructorArgs... args) {
 		if(vrsions.size())
 			return versions.back()->New(args...);
 		return NULL;
@@ -110,8 +107,8 @@ private:
 		return count;
 	}
 	
-	size_t Update(std::shared_ptr<ClassType> prev,
-			std::shared_ptr<ClassType> next,
+	size_t Update(std::shared_ptr<ClassVersion> prev,
+			std::shared_ptr<ClassVersion> next,
 			size_t count) {
 		auto it_beg = prev->GetObjects().begin();
 		auto it = it_beg;
@@ -130,14 +127,12 @@ private:
 		}
 	}
 	
-	ClassNode<Base, ConstructorArgs...>* GetNode();
-	
 private:
 	
 	bool updateToNewest;
 	
-	std::list<std::shard_ptr<ClassType>> versions;
-	ClassSource<Base, ConstructorArgs...> source;
+	std::list<std::shard_ptr<ClassVersion>> versions;
+	ClassSource source;
 };
 
 #endif

@@ -26,11 +26,8 @@
 #include <map>
 #include <limits>
 
-template<typename Base, typename... ConstructorArgs>
 class ClassesTree {
 public:
-	
-	using Node = ClassNode<Base, ConstructorArgs...>;
 	
 	ClassesTree(std::shared_ptr<Compiler> compiler) : compiler(compiler) {
 	}
@@ -39,7 +36,7 @@ public:
 	}
 	
 	
-	std::shared_ptr<Node> GetClass(const std::string& className) {
+	std::shared_ptr<ClassNode> GetClass(const std::string& className) {
 		auto it = classes.find(className);
 		if(it == classes.end())
 			return NULL;
@@ -68,7 +65,7 @@ public:
 		if(it != classes.end())
 			return false;
 		
-		auto newClass = new Node(sourcFile, className, compiler);
+		auto newClass = new ClassNode(sourcFile, className, compiler);
 		classes[className] = newClass;
 		auto parent_it = classes.find(parentClassName);
 		if(parent_it != classes.end())
@@ -84,7 +81,7 @@ public:
 	
 private:
 	
-	std::map<std::string, std::shared_ptr<Node>> classes;
+	std::map<std::string, std::shared_ptr<ClassNode>> classes;
 	std::shared_ptr<Compiler> compiler;
 	CompilerThread compilerThread;
 	std::string lastUpdatedClass;
